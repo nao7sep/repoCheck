@@ -189,15 +189,47 @@ namespace repoCheck
                             {
                                 if (xProcess != null)
                                 {
-                                    xProcess.WaitForExit ();
+                                    // プログラムの処理が途中で止まり、クラッシュはせず、そのまま進まないというのが起こるようになった
+                                    // 調べたところ、このコードブロックにおいて standard output からの出力が大きいときに起こることだと判明
+
+                                    // git のコマンドラインが pager 表示になっていて「次のページに進むにはキーを」で引っかかっているのかと思ったが、
+                                    //     コマンドプロンプトでコマンドをマニュアル実行してみると出力の全体がガバッと出て、引っかかりはなかった
+
+                                    // 原因は、If you wait for the process to exit before reading StandardOutput
+                                    //     the process can block trying to write to it, so the process never ends の可能性が高い
+
+                                    // c# - ProcessStartInfo hanging on "WaitForExit"? Why? - Stack Overflow
+                                    // https://stackoverflow.com/questions/139593/processstartinfo-hanging-on-waitforexit-why
+
+                                    // 非同期でがんばるのはめんどくさいし、いろいろな状況を見落としそうなので、
+                                    //     プロセスが終わるまで何度も読み、終わってからも残りがあれば読み、
+                                    //     それらの出力をつなげてから行分割するシンプルな実装で手抜き
+
+                                    StringBuilder xBuilderAlt = new StringBuilder ();
+
+                                    while (xProcess.HasExited == false)
+                                    {
+                                        // なくてよい
+                                        // Sleep をなくし、すぐ下の if 文のブロック内でコンソールへの出力をしてみたところ、出力は、差分の多いレポジトリーでも一度だけだった
+                                        // つまり、HasExited が false で if 文が true で一度 ReadToEnd が呼ばれれば、次の回では HasExited が false か、
+                                        //     まだ true だとしても if 文で EndOfStream が true になっていて二度目の出力にはならない
+                                        // そのくらいのスピードで処理されるようなので、Sleep を入れても実行速度が下がるだけ
+                                        // Thread.Sleep (100);
+
+                                        if (xProcess.StandardOutput.EndOfStream == false)
+                                            xBuilderAlt.Append (xProcess.StandardOutput.ReadToEnd ());
+                                    }
 
                                     if (xProcess.StandardOutput.EndOfStream == false)
-                                    {
-                                        // 1行1ファイルパス
-                                        // 今後もずっとそうか不明だが、今のところ動いている
+                                        xBuilderAlt.Append (xProcess.StandardOutput.ReadToEnd ());
 
-                                        while (xProcess.StandardOutput.ReadLine () != null)
-                                            xUntrackedFileCount ++;
+                                    if (xBuilderAlt.Length > 0)
+                                    {
+                                        using (StringReader xReader = new StringReader (xBuilderAlt.ToString ()))
+                                        {
+                                            while (xReader.ReadLine () != null)
+                                                xUntrackedFileCount ++;
+                                        }
                                     }
                                 }
                             }
@@ -223,6 +255,9 @@ namespace repoCheck
                             {
                                 if (xProcess != null)
                                 {
+                                    // こちらでは出力が1行だけなので、待ってから読む古い実装のままでよい
+                                    // ls-files の方では問題があって、待たずに読むようにした
+
                                     xProcess.WaitForExit ();
 
                                     if (xProcess.StandardOutput.EndOfStream == false)
