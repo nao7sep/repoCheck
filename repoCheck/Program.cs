@@ -10,9 +10,9 @@ namespace repoCheck
     {
         // 単機能ソフトなのでクラス分けせずパッと
 
-        private static string mDirectoryPathsFilePath = Path.Join (Path.GetDirectoryName (Assembly.GetExecutingAssembly ().Location), "DirectoryPaths.txt");
+        private static readonly string mDirectoryPathsFilePath = Path.Join (Path.GetDirectoryName (Assembly.GetExecutingAssembly ().Location), "DirectoryPaths.txt");
 
-        private static List <string>
+        private static readonly List <string>
             mIncludedDirectoryPaths = new List <string> (),
             mExcludedDirectoryPaths = new List <string> (),
             mRepoDirectoryPaths = new List <string> ();
@@ -42,9 +42,9 @@ namespace repoCheck
         }
 
         // .git が含まれている可能性の低いディレクトリー名を決め打ちで
-        private static string [] mExcludedDirectoryNames = { ".svn", ".vs", "bin", "obj" };
+        private static readonly string [] mExcludedDirectoryNames = { ".svn", ".vs", "bin", "obj" };
 
-        static void Main (string [] args)
+        static void Main (/* string [] args */)
         {
             try
             {
@@ -93,7 +93,7 @@ namespace repoCheck
 
                 else
                 {
-                    void iScanDirectory (DirectoryInfo directory)
+                    static void iScanDirectory (DirectoryInfo directory)
                     {
                         try
                         {
