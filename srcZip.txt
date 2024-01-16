@@ -1,8 +1,11 @@
 ﻿[Delete]
-Compiled
+App
 
 [Copy]
-repoCheck/bin/Release/net6.0 > Compiled
+repoCheck/bin/Release/net6.0 > App
+
+[Delete]
+App/repoCheck.pdb
 
 [Exclude]
 .git
