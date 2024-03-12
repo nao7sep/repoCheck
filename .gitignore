@@ -1,9 +1,8 @@
-﻿# ディレクトリー
+﻿# Directories
 .vs/
-App/
 bin/
 obj/
 
-# ファイル
+# Files
 .DS_Store
 Thumbs.db
